@@ -12,16 +12,12 @@ logging.basicConfig(level=logging.DEBUG)
 def encode_city(city_name):
     """Convierte el nombre de la ciudad a un valor numérico"""
     city_mapping = {
-        'brasilia': 0,
-        'sao paulo': 1,
-        'rio de janeiro': 2,
-        'belo horizonte': 3,
-        'salvador': 4,
-        'fortaleza': 5,
-        'recife': 6,
-        'porto alegre': 7,
-        'curitiba': 8,
-        'manaus': 9,
+        'Brasilia': 0,
+        'Cairo': 1,
+        'Dubai': 2,
+        'London': 3,
+        'New York': 4,
+        'Sydney': 5,
         # Agregar más ciudades según tu dataset
         'default': 0  # valor por defecto
     }
