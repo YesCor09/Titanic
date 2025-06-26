@@ -12,24 +12,45 @@ logging.basicConfig(level=logging.DEBUG)
 def encode_city(city_name):
     """Convierte el nombre de la ciudad a un valor numérico"""
     city_mapping = {
-        'Brasilia': 0,
-        'Cairo': 1,
-        'Dubai': 2,
-        'London': 3,
-        'New York': 4,
-        'Sydney': 5,
+        'brasilia': 0,
+        'sao paulo': 1,
+        'rio de janeiro': 2,
+        'belo horizonte': 3,
+        'salvador': 4,
+        'fortaleza': 5,
+        'recife': 6,
+        'porto alegre': 7,
+        'curitiba': 8,
+        'manaus': 9,
+        # Agregar más ciudades según tu dataset
         'default': 0  # valor por defecto
     }
     return city_mapping.get(city_name.lower().strip(), city_mapping['default'])
 
 def encode_date(date_string):
-    """Convierte la fecha a un valor numérico (día del año)"""
+    """Convierte la fecha y hora a un valor numérico"""
     try:
-        date_obj = datetime.strptime(date_string, '%Y-%m-%d')
-        day_of_year = date_obj.timetuple().tm_yday
-        return day_of_year
+        # Manejar formato datetime-local del HTML (YYYY-MM-DDTHH:MM)
+        date_obj = datetime.strptime(date_string, '%Y-%m-%dT%H:%M')
+        
+        # Opción 1: Timestamp Unix (recomendado para fecha + hora)
+        return int(date_obj.timestamp())
+        
+        # Opción 2: Día del año + hora como decimal
+        # day_of_year = date_obj.timetuple().tm_yday
+        # hour_fraction = date_obj.hour / 24.0
+        # return day_of_year + hour_fraction
+        
+        # Opción 3: Solo la hora del día (0-23)
+        # return date_obj.hour
+        
     except ValueError:
-        return 1  # valor por defecto si hay error en la fecha
+        # Si falla, intentar solo con fecha
+        try:
+            date_obj = datetime.strptime(date_string, '%Y-%m-%d')
+            return int(date_obj.timestamp())
+        except ValueError:
+            return 1  # valor por defecto
 
 # Cargar el modelo entrenado
 model = joblib.load('model.pkl')

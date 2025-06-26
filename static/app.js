@@ -11,9 +11,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const errorMessage = document.getElementById("errorMessage")
   const progressBar = document.getElementById("progressBar")
 
-  // Set today's date as default
-  const today = new Date().toISOString().split("T")[0]
-  document.getElementById("Date").value = today
+  // Set today's date and current time as default
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, "0")
+  const day = String(now.getDate()).padStart(2, "0")
+  const hours = String(now.getHours()).padStart(2, "0")
+  const minutes = String(now.getMinutes()).padStart(2, "0")
+  const currentDateTime = `${year}-${month}-${day}T${hours}:${minutes}`
+  document.getElementById("Date").value = currentDateTime
 
   formulario.addEventListener("submit", analizarCalidadAire)
 
@@ -54,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       successResult.classList.remove("hidden")
       successResult.classList.add("flex")
-      aqiValue.textContent = Math.round(data.aqi_prediction)
+      aqiValue.textContent = data.aqi_prediction.toFixed(2)
 
       // Animate progress bar
       setTimeout(() => {
