@@ -7,11 +7,11 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 # Cargar modelos y transformadores
-modelo = joblib.load('modelo_titanic.pkl')              # Modelo entrenado
-encoder = joblib.load('encoder.pkl')                    # ColumnTransformer que incluye OrdinalEncoder
-scaler = joblib.load('scaler_final.pkl')                # StandardScaler
-pca = joblib.load('pca_model.pkl')                      # PCA
-columnas = joblib.load('columnas_modelo.pkl')           # Lista con el orden correcto de columnas
+modelo = joblib.load('modelo_titanic_1.pkl')              # Modelo entrenado
+encoder = joblib.load('encoder.pkl_1')                    # ColumnTransformer que incluye OrdinalEncoder
+scaler = joblib.load('scaler_final_1.pkl')                # StandardScaler
+pca = joblib.load('pca_model_1.pkl')                      # PCA
+columnas = joblib.load('columnas_modelo_1.pkl')           # Lista con el orden correcto de columnas
 
 app.logger.debug('Modelos, scaler, encoder y PCA cargados correctamente.')
 
