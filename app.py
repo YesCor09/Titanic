@@ -8,7 +8,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 # Cargar modelos y transformadores
 modelo = joblib.load('modelo_titanic_1.pkl')              # Modelo entrenado
-encoder = joblib.load('encoder.pkl_1')                    # ColumnTransformer que incluye OrdinalEncoder
+encoder = joblib.load('encoder_1.pkl')                    # ColumnTransformer que incluye OrdinalEncoder
 scaler = joblib.load('scaler_final_1.pkl')                # StandardScaler
 pca = joblib.load('pca_model_1.pkl')                      # PCA
 columnas = joblib.load('columnas_modelo_1.pkl')           # Lista con el orden correcto de columnas
@@ -62,7 +62,7 @@ def predict():
 
         return jsonify({
             'survived': int(prediction[0]),
-            'probabilidad': round(probability * 100, 2)  # Para mostrarlo como porcentaje
+            'probabilidad': round(probability * 100, 2)
         })
 
     except Exception as e:
