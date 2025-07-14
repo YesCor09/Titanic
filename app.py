@@ -2,55 +2,18 @@ from flask import Flask, request, render_template, jsonify
 import joblib
 import pandas as pd
 import logging
-from datetime import datetime
 
 app = Flask(__name__)
-
-# Configurar el registro
 logging.basicConfig(level=logging.DEBUG)
 
-def encode_city(city_name):
-    """Convierte el nombre de la ciudad a un valor numérico"""
-    city_mapping = {
-        'Brasilia': 0,
-        'Cairo': 1,
-        'Dubai': 2,
-        'London': 3,
-        'New York': 4,
-        'Sydney': 5,
-        # Agregar más ciudades según tu dataset
-        'default': 0  # valor por defecto
-    }
-    return city_mapping.get(city_name.lower().strip(), city_mapping['default'])
+# Cargar modelos y transformadores
+modelo = joblib.load('modelo_titanic.pkl')              # Modelo entrenado
+encoder = joblib.load('encoder.pkl')                    # ColumnTransformer que incluye OrdinalEncoder
+scaler = joblib.load('scaler_final.pkl')                # StandardScaler
+pca = joblib.load('pca_model.pkl')                      # PCA
+columnas = joblib.load('columnas_modelo.pkl')           # Lista con el orden correcto de columnas
 
-def encode_date(date_string):
-    """Convierte la fecha y hora a un valor numérico"""
-    try:
-        # Manejar formato datetime-local del HTML (YYYY-MM-DDTHH:MM)
-        date_obj = datetime.strptime(date_string, '%Y-%m-%dT%H:%M')
-        
-        # Opción 1: Timestamp Unix (recomendado para fecha + hora)
-        return int(date_obj.timestamp())
-        
-        # Opción 2: Día del año + hora como decimal
-        # day_of_year = date_obj.timetuple().tm_yday
-        # hour_fraction = date_obj.hour / 24.0
-        # return day_of_year + hour_fraction
-        
-        # Opción 3: Solo la hora del día (0-23)
-        # return date_obj.hour
-        
-    except ValueError:
-        # Si falla, intentar solo con fecha
-        try:
-            date_obj = datetime.strptime(date_string, '%Y-%m-%d')
-            return int(date_obj.timestamp())
-        except ValueError:
-            return 1  # valor por defecto
-
-# Cargar el modelo entrenado
-model = joblib.load('model.pkl')
-app.logger.debug('Modelo cargado correctamente.')
+app.logger.debug('Modelos, scaler, encoder y PCA cargados correctamente.')
 
 @app.route('/')
 def home():
@@ -59,34 +22,49 @@ def home():
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        # Obtener los datos enviados en el request
-        PM25 = float(request.form['PM25'])
-        PM10 = float(request.form['PM10'])
-        SO2 = float(request.form['SO2'])
-        O3 = float(request.form['O3'])
-        Date = request.form['Date']
-        City = request.form['City']
+        # Obtener datos del formulario
+        Pclass = int(request.form['Pclass'])
+        Sex = request.form['Sex']
+        Age = float(request.form['Age'])
+        SibSp = int(request.form['SibSp'])
+        Embarked = request.form['Embarked']
 
-        # Convertir City y Date a valores numéricos
-        city_encoded = encode_city(City)
-        date_encoded = encode_date(Date)
+        # Crear el DataFrame en el mismo orden que el entrenamiento
+        input_df = pd.DataFrame([{
+            'Pclass': Pclass,
+            'Sex': Sex,
+            'Age': Age,
+            'SibSp': SibSp,
+            'Embarked': Embarked
+        }])
 
-        # Crear un DataFrame con los datos
-        data_df = pd.DataFrame([[PM25, PM10, SO2, date_encoded, city_encoded, O3]], 
-                              columns=['PM2.5', 'PM10', 'SO2', 'Date', 'City', 'O3'])
-        
-        app.logger.debug(f'DataFrame creado: {data_df}')
-        app.logger.debug(f'Ciudad original: {City} -> Codificada: {city_encoded}')
-        app.logger.debug(f'Fecha original: {Date} -> Codificada: {date_encoded}')
+        # Asegurar orden correcto de columnas
+        input_df = input_df[columnas]
 
-        # Realizar predicciones
-        prediction = model.predict(data_df)
-        app.logger.debug(f'Predicción: {prediction[0]}')
+        # Codificar con encoder que maneja variables categóricas
+        input_encoded = encoder.transform(input_df)
 
-        # Devolver solo la predicción AQI
+        # Escalar
+        X_scaled = scaler.transform(input_encoded)
+
+        # Aplicar PCA
+        X_pca = pca.transform(X_scaled)
+
+        # Predecir
+        prediction = modelo.predict(X_pca)
+        probability = modelo.predict_proba(X_pca)[0][1]
+
+        # Debug logs en consola
+        print("Datos originales:\n", input_df)
+        print("Codificado:\n", input_encoded)
+        print("Escalado:\n", X_scaled)
+        print("PCA:\n", X_pca)
+
         return jsonify({
-            'aqi_prediction': float(prediction[0])
+            'survived': int(prediction[0]),
+            'probabilidad': round(probability * 100, 2)  # Para mostrarlo como porcentaje
         })
+
     except Exception as e:
         app.logger.error(f'Error en la predicción: {str(e)}')
         return jsonify({'error': str(e)}), 400
